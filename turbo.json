@@ -23,7 +23,7 @@
       ],
       "outputs": [".next/**", "!.next/cache/**"]
     },
-    "@maily-to/web#build": {
+    "@targelyst/maily-web#build": {
       "dependsOn": ["^build"],
       "env": [
         "NODE_ENV",

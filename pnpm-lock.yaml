@@ -47,12 +47,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@maily-to/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@maily-to/render':
-        specifier: workspace:*
-        version: link:../../packages/render
       '@radix-ui/react-dialog':
         specifier: ^1.1.6
         version: 1.1.6(@types/react-dom@19.0.4(@types/react@19.0.12))(@types/react@19.0.12)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -77,6 +71,12 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.69.0
         version: 5.69.0(react@19.0.0)
+      '@targelyst/maily-core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@targelyst/maily-render':
+        specifier: workspace:*
+        version: link:../../packages/render
       '@tiptap/core':
         specifier: ^2.11.5
         version: 2.11.5(@tiptap/pm@2.11.5)

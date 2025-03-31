@@ -3,7 +3,7 @@ import type { Route } from './+types/api.v1.emails.preview';
 import { serializeZodError } from '~/lib/errors';
 import { apiConfigCookie } from '~/lib/api-config.server';
 import { json } from '~/lib/response';
-import { render } from '@maily-to/render';
+import { render } from '@targelyst/maily-render';
 import { Resend } from 'resend';
 
 export async function action(args: Route.ActionArgs) {

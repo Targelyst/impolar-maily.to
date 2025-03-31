@@ -1,5 +1,5 @@
 {
-  "name": "@maily-to/web",
+  "name": "@targelyst/maily-web",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,8 +10,8 @@
     "generate:meta": "tsx ./app/scripts/generate-metadata-files.ts"
   },
   "dependencies": {
-    "@maily-to/core": "workspace:*",
-    "@maily-to/render": "workspace:*",
+    "@targelyst/maily-core": "workspace:*",
+    "@targelyst/maily-render": "workspace:*",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.2",

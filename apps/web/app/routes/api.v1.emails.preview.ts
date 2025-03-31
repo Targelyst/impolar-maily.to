@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Route } from './+types/api.v1.emails.preview';
-import { render } from '@maily-to/render';
+import { render } from '@targelyst/maily-render';
 import { data } from 'react-router';
 import { serializeZodError } from '~/lib/errors';
 

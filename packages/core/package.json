@@ -1,5 +1,5 @@
 {
-  "name": "@maily-to/core",
+  "name": "@targelyst/maily-core",
   "type": "module",
   "version": "0.2.7",
   "description": "Powerful editor for creating beautiful, pre-designed, mobile-ready emails.",
