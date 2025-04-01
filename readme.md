@@ -82,6 +82,17 @@ Feel free to submit pull requests, create issues, or spread the word. For gettin
 5. `pnpm install` to install all the dependencies.
 6. `pnpm dev` to start the development server.
 
+### Automatic Release
+
+To automatically release and publish changes, follow this workflow:
+
+1. Edit code
+2. Commit changes
+3. Run `pnpm changeset`
+4. Fill out the form
+5. Push
+6. Profit
+
 ## License
 
 MIT &copy; [Arik Chakma](https://twitter.com/imarikchakma)

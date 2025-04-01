@@ -12,7 +12,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,md}\"",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
-    "publish-packages": "turbo run build test && changeset version && changeset publish"
+    "release": "turbo run build test && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.28.1",
