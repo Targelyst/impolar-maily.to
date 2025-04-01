@@ -189,7 +189,8 @@
     "postcss-replace": "^2.0.1",
     "tailwind-config": "workspace:*",
     "tsconfig": "workspace:*",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "eslint-config": "workspace:*"
   },
   "peerDependencies": {
     "react": "^18 || ^19"

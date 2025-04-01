@@ -51,7 +51,8 @@
     "@tiptap/core": "^2.11.5",
     "@types/react": "^19.0.12",
     "tsconfig": "workspace:*",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "eslint-config": "workspace:*"
   },
   "dependencies": {
     "@react-email/components": "^0.0.34",
