@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "react-router build",
-    "dev": "cross-env NODE_ENV=development react-router dev --port 3000",
+    "dev": "cross-env NODE_ENV=development react-router dev --port 3000 --host 0.0.0.0",
     "start": "react-router ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "generate:meta": "tsx ./app/scripts/generate-metadata-files.ts"

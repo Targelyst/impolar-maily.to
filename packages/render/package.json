@@ -24,7 +24,7 @@
   },
   "scripts": {
     "dev": "tsup --watch",
-    "clean": "rm -rf dist",
+    "clean": "rimraf dist",
     "build": "tsup",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

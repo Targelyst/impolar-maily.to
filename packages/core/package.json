@@ -124,8 +124,8 @@
     }
   },
   "scripts": {
-    "dev": "tsup --watch",
-    "clean": "rm -rf dist",
+    "dev": "tsup",
+    "clean": "rimraf dist",
     "build": "tsup"
   },
   "repository": {
