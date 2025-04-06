@@ -28,6 +28,7 @@ import {
 } from './provider';
 import { cn } from './utils/classname';
 import { replaceDeprecatedNode } from './utils/replace-deprecated';
+import { RearrangeButton } from './components/rearrange-button';
 
 type ParitialMailContextType = Partial<MailyContextType>;
 
@@ -154,6 +155,9 @@ export function Editor(props: EditorProps) {
           <HTMLBubbleMenu editor={editor} appendTo={menuContainerRef} />
           <InlineImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
         </div>
+        
+        {/* Add the RearrangeButton component here */}
+        <RearrangeButton editor={editor} />
       </div>
     </MailyProvider>
   );
