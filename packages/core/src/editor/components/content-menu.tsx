@@ -1,7 +1,7 @@
 import type { Editor } from '@tiptap/core';
 import { useCallback, useEffect, useState } from 'react';
 
-import type { NodeSelection } from '@tiptap/pm/state';
+import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 
 import type { Node } from '@tiptap/pm/model';
 import { Copy, GripVertical, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
@@ -38,7 +38,6 @@ export function ContentMenu(props: ContentMenuProps) {
 
       setCurrentNodePos(data.pos);
       
-      // Check if the node can be moved up or down
       const { state } = editor;
       const { doc } = state;
       
@@ -47,14 +46,20 @@ export function ContentMenu(props: ContentMenuProps) {
         const $pos = doc.resolve(data.pos);
         const depth = $pos.depth;
         
-        // Only allow moving if this is a top-level node (direct child of doc)
-        if (depth === 1) {
+        // Allow moving for nodes at any depth as long as they have a parent
+        if (depth > 0) {
+          // Get the index within the parent
+          const parentDepth = depth - 1;
+          const index = $pos.index(parentDepth);
+          const parent = $pos.node(parentDepth);
+          
+          setCanMoveUp(index > 0);
+          setCanMoveDown(index < parent.content.childCount - 1);
+        } else {
+          // Top-level nodes directly in the document (depth = 0)
           const index = $pos.index(0);
           setCanMoveUp(index > 0);
           setCanMoveDown(index < doc.content.childCount - 1);
-        } else {
-          setCanMoveUp(false);
-          setCanMoveDown(false);
         }
       }
     },
@@ -124,6 +129,73 @@ export function ContentMenu(props: ContentMenuProps) {
     }
   }
   
+
+  function moveNodeDown() {
+    if (!canMoveDown || currentNodePos === -1) return;
+    
+    const { state, dispatch } = editor.view;
+    const { tr, doc } = state;
+    
+    // Find the nodes we're working with
+    const $pos = doc.resolve(currentNodePos);
+    const index = $pos.index(0);
+    const nextIndex = index + 1;
+    
+    // Instead of manipulating positions directly, let's rebuild the document
+    // with our nodes in the correct order
+    
+    // Create a new array of all top-level nodes
+    const nodesToKeep = [];
+    for (let i = 0; i < doc.content.childCount; i++) {
+      if (i !== index && i !== nextIndex) {
+        nodesToKeep.push(doc.child(i));
+      }
+    }
+    
+    // Insert them in the correct order (swapped)
+    const currentNodeCopy = doc.child(index);
+    const nextNodeCopy = doc.child(nextIndex);
+    
+    // Build nodes in the new order
+    const reorderedNodes = [];
+    doc.content.forEach((node, _, i) => {
+      if (i === index) {
+        reorderedNodes.push(nextNodeCopy);
+      } else if (i === nextIndex) {
+        reorderedNodes.push(currentNodeCopy);
+      } else {
+        reorderedNodes.push(node);
+      }
+    });
+    
+    // Create a new document with the nodes in the correct order
+    const { schema } = state;
+    const newDoc = schema.nodes.doc.create(null, reorderedNodes);
+    
+    // Replace the entire document
+    const transaction = tr.replaceWith(0, doc.content.size, newDoc.content);
+    
+    // Calculate the new position of our moved node (now at nextIndex position)
+    let newPos = 0;
+    for (let i = 0; i < nextIndex; i++) {
+      newPos += reorderedNodes[i].nodeSize;
+    }
+    
+    // Set the selection to the moved node
+    transaction.setSelection(TextSelection.near(transaction.doc.resolve(newPos)));
+    
+    // Dispatch the transaction
+    dispatch(transaction);
+    
+    // Close the menu
+    setMenuOpen(false);
+    
+    // Update tracking state
+    setCurrentNodePos(newPos);
+    setCurrentNode(reorderedNodes[nextIndex]);
+    setCanMoveUp(true);
+    setCanMoveDown(nextIndex < doc.content.childCount - 2);
+  }
   function moveNodeUp() {
     if (!canMoveUp || currentNodePos === -1) return;
     
@@ -136,50 +208,56 @@ export function ContentMenu(props: ContentMenuProps) {
     
     // Get the node before the current node
     const prevIndex = index - 1;
+    const prevNode = doc.child(prevIndex);
     
-    // Calculate positions
-    let startPos = 0;
-    for (let i = 0; i < prevIndex; i++) {
-      startPos += doc.child(i).nodeSize;
+    // Store current node content and attributes
+    const currentNodeContent = currentNode?.content;
+    const currentNodeAttrs = currentNode?.attrs;
+    const currentNodeType = currentNode?.type;
+    
+    // Store the sizes before modification
+    const currentNodeSize = currentNode?.nodeSize || 0;
+    const prevNodeSize = prevNode.nodeSize;
+    
+    // Calculate insertion position (where the previous node starts)
+    let insertPos = currentNodePos - prevNodeSize;
+    
+    // Create a new transaction for the entire operation
+    let transaction = tr;
+    
+    // Create a new node with the same content and attributes
+    if (currentNodeType && currentNodeContent) {
+      const newNode = currentNodeType.create(currentNodeAttrs, currentNodeContent);
+      
+      // Use a single transaction: delete original, then insert at new position
+      transaction = transaction
+        .delete(currentNodePos, currentNodePos + currentNodeSize)
+        .insert(insertPos, newNode);
+      
+      // Set selection to the moved node using TextSelection
+      transaction = transaction.setSelection(
+        TextSelection.near(transaction.doc.resolve(insertPos))
+      );
     }
     
-    const prevNodeSize = doc.child(prevIndex).nodeSize;
-    const currentNodeSize = currentNode?.nodeSize || 0;
-    
-    // Create transaction to swap positions
-    const transaction = tr.delete(currentNodePos, currentNodePos + currentNodeSize)
-                          .insert(startPos, currentNode as Node);
-    
     dispatch(transaction);
     
-    // Update the current node position
-    setCurrentNodePos(startPos);
-  }
-  
-  function moveNodeDown() {
-    if (!canMoveDown || currentNodePos === -1) return;
+    // Close the menu immediately
+    setMenuOpen(false);
     
-    const { state, dispatch } = editor.view;
-    const { tr, doc } = state;
-    
-    // Get the current node position info
-    const $pos = doc.resolve(currentNodePos);
-    const index = $pos.index(0);
-    
-    // Get the node after the current node
-    const nextIndex = index + 1;
-    const nextNode = doc.child(nextIndex);
-    const nextNodeSize = nextNode.nodeSize;
-    const currentNodeSize = currentNode?.nodeSize || 0;
-    
-    // Create transaction to swap positions
-    const transaction = tr.delete(currentNodePos, currentNodePos + currentNodeSize)
-                          .insert(currentNodePos + nextNodeSize, currentNode as Node);
-    
-    dispatch(transaction);
-    
-    // Update the current node position
-    setCurrentNodePos(currentNodePos + nextNodeSize);
+    // Wait for the document to update before changing state
+    setTimeout(() => {
+      // Update the current node position
+      setCurrentNodePos(insertPos);
+      
+      // Recalculate canMove states
+      const updatedDoc = editor.state.doc;
+      const updated$pos = updatedDoc.resolve(insertPos);
+      const updatedIndex = updated$pos.index(0);
+      
+      setCanMoveUp(updatedIndex > 0);
+      setCanMoveDown(true); // We can always move down after moving up
+    }, 0);
   }
 
   useEffect(() => {
