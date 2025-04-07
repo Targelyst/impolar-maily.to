@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { NodeSelection, TextSelection } from '@tiptap/pm/state';
 
 import type { Node } from '@tiptap/pm/model';
-import { Copy, GripVertical, Plus, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Copy, GripVertical, Plus, Trash2, ChevronUp, ChevronDown, Pencil } from 'lucide-react';
 import { BaseButton } from './base-button';
 import {
   Tooltip,
@@ -25,6 +25,7 @@ export function ContentMenu(props: ContentMenuProps) {
   const { editor } = props;
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [editMenuOpen, setEditMenuOpen] = useState(false);
   const [currentNode, setCurrentNode] = useState<Node | null>(null);
   const [currentNodePos, setCurrentNodePos] = useState<number>(-1);
   const [canMoveUp, setCanMoveUp] = useState(false);
@@ -80,7 +81,7 @@ export function ContentMenu(props: ContentMenuProps) {
       )
       .run();
 
-    setMenuOpen(false);
+    setEditMenuOpen(false);
   }
 
   function deleteCurrentNode() {
@@ -91,7 +92,7 @@ export function ContentMenu(props: ContentMenuProps) {
       .deleteSelection()
       .run();
 
-    setMenuOpen(false);
+    setEditMenuOpen(false);
   }
 
   function handleAddNewNode() {
@@ -261,7 +262,7 @@ export function ContentMenu(props: ContentMenuProps) {
   }
 
   useEffect(() => {
-    if (menuOpen) {
+    if (menuOpen || editMenuOpen) {
       editor.commands.setMeta('lockDragHandle', true);
     } else {
       editor.commands.setMeta('lockDragHandle', false);
@@ -270,7 +271,11 @@ export function ContentMenu(props: ContentMenuProps) {
     return () => {
       editor.commands.setMeta('lockDragHandle', false);
     };
-  }, [editor, menuOpen]);
+  }, [editor, menuOpen, editMenuOpen]);
+
+  // Icon size class - larger on mobile
+  const iconSizeClass = "mly-size-3.5 sm:mly-size-3.5 mly-size-4 mly-shrink-0";
+  const buttonSizeClass = "!mly-size-7 sm:!mly-size-7 !mly-size-8";
 
   return (
     <DragHandle
@@ -294,11 +299,11 @@ export function ContentMenu(props: ContentMenuProps) {
               <BaseButton
                 variant="ghost"
                 size="icon"
-                className="!mly-size-7 mly-cursor-pointer mly-text-gray-500 hover:mly-text-black"
+                className={cn(buttonSizeClass, "mly-cursor-pointer mly-text-gray-500 hover:mly-text-black")}
                 onClick={handleAddNewNode}
                 type="button"
               >
-                <Plus className="mly-size-3.5 mly-shrink-0" />
+                <Plus className={iconSizeClass} />
               </BaseButton>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>Add new node</TooltipContent>
@@ -310,7 +315,8 @@ export function ContentMenu(props: ContentMenuProps) {
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "!mly-size-7 mly-text-gray-500",
+                  buttonSizeClass,
+                  "mly-text-gray-500",
                   canMoveUp 
                     ? "mly-cursor-pointer hover:mly-text-black" 
                     : "mly-cursor-not-allowed mly-opacity-50"
@@ -319,7 +325,7 @@ export function ContentMenu(props: ContentMenuProps) {
                 disabled={!canMoveUp}
                 type="button"
               >
-                <ChevronUp className="mly-size-3.5 mly-shrink-0" />
+                <ChevronUp className={iconSizeClass} />
               </BaseButton>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>Move up</TooltipContent>
@@ -331,7 +337,8 @@ export function ContentMenu(props: ContentMenuProps) {
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "!mly-size-7 mly-text-gray-500",
+                  buttonSizeClass,
+                  "mly-text-gray-500",
                   canMoveDown 
                     ? "mly-cursor-pointer hover:mly-text-black" 
                     : "mly-cursor-not-allowed mly-opacity-50"
@@ -340,31 +347,32 @@ export function ContentMenu(props: ContentMenuProps) {
                 disabled={!canMoveDown}
                 type="button"
               >
-                <ChevronDown className="mly-size-3.5 mly-shrink-0" />
+                <ChevronDown className={iconSizeClass} />
               </BaseButton>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>Move down</TooltipContent>
           </Tooltip>
 
-          <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+          {/* New Edit Button */}
+          <Popover open={editMenuOpen} onOpenChange={setEditMenuOpen}>
             <div className="mly-relative mly-flex mly-flex-col">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <BaseButton
                     variant="ghost"
                     size="icon"
-                    className="mly-relative mly-z-[1] !mly-size-7 mly-cursor-grab mly-text-gray-500 hover:mly-text-black"
+                    className={cn(buttonSizeClass, "mly-relative mly-z-[1] mly-cursor-pointer mly-text-gray-500 hover:mly-text-black")}
                     onClick={(e) => {
                       e.preventDefault();
-                      setMenuOpen(true);
+                      setEditMenuOpen(true);
                       editor.commands.setNodeSelection(currentNodePos);
                     }}
                     type="button"
                   >
-                    <GripVertical className="mly-size-3.5 mly-shrink-0" />
+                    <Pencil className={iconSizeClass} />
                   </BaseButton>
                 </TooltipTrigger>
-                <TooltipContent sideOffset={8}>Node actions</TooltipContent>
+                <TooltipContent sideOffset={8}>Edit options</TooltipContent>
               </Tooltip>
               <PopoverTrigger className="mly-absolute mly-left-0 mly-top-0 mly-z-0 mly-h-5 mly-w-5" />
             </div>
@@ -391,6 +399,43 @@ export function ContentMenu(props: ContentMenuProps) {
                 <Trash2 className="mly-size-[15px] mly-shrink-0" />
                 Delete
               </BaseButton>
+            </PopoverContent>
+          </Popover>
+
+          {/* Drag Handle (now only for dragging) */}
+          <Popover open={menuOpen} onOpenChange={setMenuOpen}>
+            <div className="mly-relative mly-flex mly-flex-col">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <BaseButton
+                    variant="ghost"
+                    size="icon"
+                    className={cn(buttonSizeClass, "mly-relative mly-z-[1] mly-cursor-grab mly-text-gray-500 hover:mly-text-black")}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setMenuOpen(true);
+                      editor.commands.setNodeSelection(currentNodePos);
+                    }}
+                    type="button"
+                  >
+                    <GripVertical className={iconSizeClass} />
+                  </BaseButton>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={8}>Drag to reorder</TooltipContent>
+              </Tooltip>
+              <PopoverTrigger className="mly-absolute mly-left-0 mly-top-0 mly-z-0 mly-h-5 mly-w-5" />
+            </div>
+
+            {/* Empty popover content since functionality moved to edit button */}
+            <PopoverContent
+              align="start"
+              side="right"
+              sideOffset={8}
+              className="mly-flex mly-w-max mly-flex-col mly-rounded-md mly-p-1"
+            >
+              <div className="mly-p-2 mly-text-sm">
+                Drag to reorder content
+              </div>
             </PopoverContent>
           </Popover>
         </div>

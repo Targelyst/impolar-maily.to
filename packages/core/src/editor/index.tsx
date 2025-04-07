@@ -7,7 +7,7 @@ import {
 } from '@tiptap/core';
 import { EditorContent, JSONContent, useEditor } from '@tiptap/react';
 
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useEffect, useCallback } from 'react';
 import { ColumnsBubbleMenu } from './components/column-menu/columns-bubble-menu';
 import { ContentMenu } from './components/content-menu';
 import { EditorMenuBar } from './components/editor-menu-bar';
@@ -71,6 +71,19 @@ export function Editor(props: EditorProps) {
     editable = true,
     placeholderUrl = DEFAULT_PLACEHOLDER_URL,
   } = props;
+  
+  // Detect if the device is mobile/tablet
+  const isMobileDevice = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+    }
+    return false;
+  }, []);
+  
+  // For double tap detection
+  const lastTapTime = useRef(0);
 
   const formattedContent = useMemo(() => {
     if (contentJson) {
@@ -96,9 +109,10 @@ export function Editor(props: EditorProps) {
         ],
       };
     }
-  }, [contentHtml, contentJson, replaceDeprecatedNode]);
+  }, [contentHtml, contentJson]);
 
   const menuContainerRef = useRef(null);
+  
   const editor = useEditor({
     editorProps: {
       attributes: {
@@ -119,8 +133,36 @@ export function Editor(props: EditorProps) {
     }),
     content: formattedContent,
     autofocus,
-    editable,
+    editable: isMobileDevice ? false : editable, // Initially non-editable on mobile
   });
+  
+  // Set initial editable state based on device type
+  useEffect(() => {
+    if (!editor) return;
+    
+    // For mobile devices, initially set editor to non-editable
+    if (isMobileDevice) {
+      editor.setEditable(false);
+    } else {
+      editor.setEditable(editable);
+    }
+  }, [editor, editable, isMobileDevice]);
+  
+  // Handle touch events for double tap detection
+  const handleTouchStart = useCallback((e) => {
+    if (!isMobileDevice || !editor) return;
+    
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapTime.current;
+    
+    if (tapLength < 300 && tapLength > 0) {
+      // Double tap detected - toggle editable state
+      editor.setEditable(!editor.isEditable);
+      e.preventDefault(); // Prevent default touch behavior
+    }
+    
+    lastTapTime.current = currentTime;
+  }, [editor, isMobileDevice]);
 
   if (!editor) {
     return null;
@@ -142,6 +184,7 @@ export function Editor(props: EditorProps) {
             'mly-mt-4 mly-rounded mly-border mly-border-gray-200 mly-bg-white mly-p-4',
             bodyClassName
           )}
+          onTouchStart={handleTouchStart}
         >
           <TextBubbleMenu editor={editor} appendTo={menuContainerRef} />
           <ImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
