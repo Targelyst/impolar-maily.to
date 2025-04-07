@@ -24,7 +24,6 @@ export type ContentMenuProps = {
 export function ContentMenu(props: ContentMenuProps) {
   const { editor } = props;
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const [editMenuOpen, setEditMenuOpen] = useState(false);
   const [currentNode, setCurrentNode] = useState<Node | null>(null);
   const [currentNodePos, setCurrentNodePos] = useState<number>(-1);
@@ -188,8 +187,7 @@ export function ContentMenu(props: ContentMenuProps) {
     // Dispatch the transaction
     dispatch(transaction);
     
-    // Close the menu
-    setMenuOpen(false);
+    // No need to close any menu here
     
     // Update tracking state
     setCurrentNodePos(newPos);
@@ -262,7 +260,7 @@ export function ContentMenu(props: ContentMenuProps) {
   }
 
   useEffect(() => {
-    if (menuOpen || editMenuOpen) {
+    if (editMenuOpen) {
       editor.commands.setMeta('lockDragHandle', true);
     } else {
       editor.commands.setMeta('lockDragHandle', false);
@@ -271,7 +269,7 @@ export function ContentMenu(props: ContentMenuProps) {
     return () => {
       editor.commands.setMeta('lockDragHandle', false);
     };
-  }, [editor, menuOpen, editMenuOpen]);
+  }, [editor, editMenuOpen]);
 
   // Icon size class - larger on mobile
   const iconSizeClass = "mly-size-3.5 sm:mly-size-3.5 mly-size-4 mly-shrink-0";
@@ -402,42 +400,28 @@ export function ContentMenu(props: ContentMenuProps) {
             </PopoverContent>
           </Popover>
 
-          {/* Drag Handle (now only for dragging) */}
-          <Popover open={menuOpen} onOpenChange={setMenuOpen}>
-            <div className="mly-relative mly-flex mly-flex-col">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <BaseButton
-                    variant="ghost"
-                    size="icon"
-                    className={cn(buttonSizeClass, "mly-relative mly-z-[1] mly-cursor-grab mly-text-gray-500 hover:mly-text-black")}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setMenuOpen(true);
-                      editor.commands.setNodeSelection(currentNodePos);
-                    }}
-                    type="button"
-                  >
-                    <GripVertical className={iconSizeClass} />
-                  </BaseButton>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={8}>Drag to reorder</TooltipContent>
-              </Tooltip>
-              <PopoverTrigger className="mly-absolute mly-left-0 mly-top-0 mly-z-0 mly-h-5 mly-w-5" />
-            </div>
-
-            {/* Empty popover content since functionality moved to edit button */}
-            <PopoverContent
-              align="start"
-              side="right"
-              sideOffset={8}
-              className="mly-flex mly-w-max mly-flex-col mly-rounded-md mly-p-1"
-            >
-              <div className="mly-p-2 mly-text-sm">
-                Drag to reorder content
+          {/* Drag Handle for actual dragging */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div 
+                className={cn(
+                  "mly-flex mly-items-center mly-justify-center",
+                  buttonSizeClass,
+                  "mly-cursor-grab mly-text-gray-500 hover:mly-text-black"
+                )}
+                data-drag-handle
+                onMouseDown={(e) => {
+                  // Set node selection before drag starts
+                  if (currentNodePos !== -1) {
+                    editor.commands.setNodeSelection(currentNodePos);
+                  }
+                }}
+              >
+                <GripVertical className={iconSizeClass} />
               </div>
-            </PopoverContent>
-          </Popover>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={8}>Drag to reorder</TooltipContent>
+          </Tooltip>
         </div>
       </TooltipProvider>
     </DragHandle>
